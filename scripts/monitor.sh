@@ -1,0 +1,12 @@
+#!/bin/bash
+echo "=== System Resources ==="
+echo "CPU: $(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | awk -F'%' '{print $1}')% used"
+echo "RAM: $(free -h | awk 'NR==2{printf "%.1f/%.1fGB (%.1f%%)", $3/1024/1024, $2/1024/1024, $3*100/$2}')"
+echo "Swap: $(free -h | awk 'NR==3{printf "%.1f/%.1fGB", $3/1024/1024, $2/1024/1024}')"
+echo "Disk: $(df -h / | awk 'NR==2{printf "%s/%s (%s used)", $3, $2, $5}')"
+echo ""
+echo "=== Docker Containers ==="
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+echo ""
+echo "=== Docker Resource Usage ==="
+docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}"

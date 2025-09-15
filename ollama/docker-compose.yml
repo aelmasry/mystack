@@ -1,0 +1,43 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama-server
+    restart: unless-stopped
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+    # Remove port exposure when using reverse proxy
+    # ports:
+    #   - '11434:11434'
+    volumes:
+      - ./models:/root/.ollama
+      - ./config:/config
+    networks:
+      - mystack-network
+
+  ollama-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: ollama-webui
+    restart: unless-stopped
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY:-your-secret-key-here}
+      - DEFAULT_USER_ROLE=${DEFAULT_USER_ROLE:-admin}
+      - WEBUI_AUTH=${WEBUI_AUTH:-True}
+      - ENABLE_SIGNUP=${ENABLE_SIGNUP:-False}
+    ports:
+      - '3000:8080'
+    volumes:
+      - ./webui-data:/app/backend/data
+    depends_on:
+      - ollama
+    networks:
+      - mystack-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  mystack-network:
+    external: true

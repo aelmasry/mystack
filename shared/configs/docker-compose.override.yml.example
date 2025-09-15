@@ -1,0 +1,63 @@
+# Docker Compose Override Example
+# Copy this file to docker-compose.override.yml in any service directory
+# to customize the default configuration
+
+version: '3.8'
+
+services:
+  # Example: Override n8n service
+  n8n:
+    environment:
+      # Add custom environment variables
+      - N8N_CUSTOM_ENV=production
+    volumes:
+      # Add custom volumes
+      - ./custom-data:/custom-data
+    labels:
+      # Add custom labels
+      - "traefik.enable=true"
+      - "traefik.http.routers.n8n.rule=Host(`n8n.yourdomain.com`)"
+
+  # Example: Override database service
+  postgres:
+    environment:
+      # Custom PostgreSQL configuration
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    command: >
+      postgres
+      -c shared_preload_libraries=pg_stat_statements
+      -c pg_stat_statements.track=all
+      -c max_connections=200
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+
+  # Example: Override Redis service
+  redis:
+    command: >
+      redis-server
+      --appendonly yes
+      --appendfsync everysec
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+
+# Example: Add additional networks
+networks:
+  mystack-network:
+    external: true
+  custom-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# Example: Add additional volumes
+volumes:
+  custom-data:
+    driver: local
